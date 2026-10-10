@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Free Bug Bot</title>
+<title>DarkX WaBot</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -119,7 +119,7 @@ input[type=text]:focus{border-color:var(--accent2);}
       <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--accent2)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
     </div>
     <h2>Site under maintenance</h2>
-    <p>Free Bug Bot is currently being fixed. Admin access only for now.</p>
+    <p>DarkX WaBot is currently being fixed. Admin access only for now.</p>
     <input type="password" id="maint-code-input" placeholder="Admin code" autocomplete="off"/>
     <div class="maint-error" id="maint-error">Incorrect code.</div>
     <button class="btn" onclick="maintUnlock()">Enter</button>
@@ -136,14 +136,14 @@ input[type=text]:focus{border-color:var(--accent2);}
       My Paired Number
     </button>
   </div>
-  <span class="topnav-title">Free Bug Bot</span>
+  <span class="topnav-title">DarkX WaBot</span>
 </nav>
 
 <div class="wrap">
   <div class="hero">
-    <img src="https://files.catbox.moe/rg113k.jpg" alt="Free Bug Bot"/>
+    <img src="https://files.catbox.moe/rg113k.jpg" alt="DarkX WaBot"/>
     <div class="hero-text">
-      <div class="name">FREE BUG BOT</div>
+      <div class="name">DARKX WABOT</div>
       <div class="tag">Multi Device WhatsApp Bot</div>
     </div>
   </div>
@@ -171,7 +171,7 @@ input[type=text]:focus{border-color:var(--accent2);}
       <div class="phone-row">
         <div class="prefix-wrap">
           <div class="prefix-box" id="prefix-display">+</div>
-          <input class="prefix-input" type="text" id="prefix-input" value="" placeholder="+" oninput="onPrefixInput(this.value)" maxlength="5"/>
+          <input class="prefix-input" type="text" id="prefix-input" value="" placeholder="+" oninput="onPrefixInput(this.value)" maxlength="7"/>
         </div>
         <input type="text" id="num-input" placeholder="xxxx" inputmode="numeric" maxlength="15"/>
       </div>
@@ -255,7 +255,7 @@ input[type=text]:focus{border-color:var(--accent2);}
 <script>
 const MAINTENANCE_MODE = false;
 const MAINTENANCE_CODE = 'aliandro';
-const MAINTENANCE_SESSION_KEY = 'sqxMaintUnlocked';
+const MAINTENANCE_SESSION_KEY = 'darkxMaintUnlocked';
 
 (function initMaintenanceGate() {
   if (!MAINTENANCE_MODE) return;
@@ -323,9 +323,10 @@ function closeCountryModal() {
 
 function selectCountry(code, name, flag) {
   selectedCountry = { code, name, flag };
+  const dial = '+' + String(code).replace(/[^0-9]/g, '');
   document.getElementById('country-display').textContent = `${flag} ${name} (${code})`;
-  document.getElementById('prefix-display').textContent = code;
-  document.getElementById('prefix-input').value = code;
+  document.getElementById('prefix-display').textContent = dial;
+  document.getElementById('prefix-input').value = dial;
   closeCountryModal();
   document.getElementById('num-input').focus();
 }
@@ -338,7 +339,7 @@ function onPrefixInput(val) {
 
   const code = v.trim();
   if (code.length >= 2) {
-    const match = countries.find(c => c.code === code);
+    const match = countries.find(c => c.code.replace(/[^0-9+]/g, '') === code);
     if (match) {
       selectedCountry = match;
       document.getElementById('country-display').textContent = `${match.flag} ${match.name} (${match.code})`;
@@ -365,6 +366,7 @@ function toast(msg) {
   el._t = setTimeout(() => { el.style.display = 'none'; }, 3000);
 }
 
+function digitsOnly(v) { return String(v || '').replace(/[^0-9]/g, ''); }
 function maskNumero(numero) {
   const clean = String(numero || '').replace(/[^0-9]/g, '');
   if (clean.length <= 8) return clean;
@@ -388,7 +390,7 @@ async function api(url, method, body) {
   }
 }
 
-const MY_NUMBERS_KEY = 'sqxMyNumbers';
+const MY_NUMBERS_KEY = 'darkxMyNumbers';
 function getMyNumbers() {
   try { return JSON.parse(localStorage.getItem(MY_NUMBERS_KEY) || '[]'); } catch (e) { return []; }
 }
@@ -403,12 +405,19 @@ function removeMyNumber(numero) {
 async function doPair() {
   const prefix = (document.getElementById('prefix-input').value || '').replace(/[^0-9]/g, '');
   const numInput = document.getElementById('num-input');
-  const numPart = numInput.value.replace(/[^0-9]/g, '');
+  let numPart = numInput.value.replace(/[^0-9]/g, '');
 
   if (!prefix) { toast('Select a country / dial code first'); return; }
+
+  // 0712345678 -> 712345678 (WhatsApp haitaki sifuri ya mwanzo baada ya country code)
+  numPart = numPart.replace(/^0+/, '');
+  // Mtu akiandika namba nzima pamoja na country code, usiirudie
+  if (numPart.startsWith(prefix) && numPart.length > 10) numPart = numPart.slice(prefix.length);
+
   if (numPart.length < 5) { toast('Enter a valid number'); return; }
 
   const number = prefix + numPart;
+  if (number.length < 7 || number.length > 15) { toast('Number length is not valid'); return; }
 
   document.getElementById('pair-setup').style.display = 'none';
   const statusCard = document.getElementById('pair-status');
@@ -433,6 +442,8 @@ async function doPair() {
     }
     const msg = r?.error === 'already_connected' ? 'This number is already connected.'
       : r?.error === 'server_full' ? 'This number is already connected.'
+      : r?.error === 'invalid_number' ? 'Invalid number. Check the country code and number.'
+      : r?.error === 'too_many_requests' ? 'Too many attempts. Please wait a few minutes.'
       : 'Failed to generate a pairing code. Try again.';
     label.textContent = 'Error';
     body.innerHTML = `<div class="hint" style="color:var(--accent2);">${msg}</div>`;
@@ -584,7 +595,7 @@ async function loadAllPaired() {
       <div class="paired-row">
         <span class="paired-num">
           <span class="status-dot" style="background:${st.color};box-shadow:0 0 6px ${st.color};"></span>
-          +${maskNumero(n.numero)}
+          +${n.numero}
         </span>
         <span style="font-size:.7rem;font-weight:700;color:${st.color};">${st.label}</span>
       </div>

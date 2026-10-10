@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: darkx-wabot
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: WORKER_SERVERS
+        value: https://bugbot-fiay.onrender.com
+      - key: WORKER_SECRET
+        sync: false
+      - key: OWNER_CODE
+        sync: false
+      - key: OWNER_TOKEN_SECRET
+        generateValue: true
